@@ -16,7 +16,6 @@ public class DialogoAsientos extends JDialog {
         setLocationRelativeTo(parent);
         setLayout(new BorderLayout());
 
-        // Representación de la Pantalla del Cine
         JLabel lblPantalla = new JLabel("P A N T A L L A", SwingConstants.CENTER);
         lblPantalla.setOpaque(true);
         lblPantalla.setBackground(new Color(50, 50, 50));
@@ -25,7 +24,6 @@ public class DialogoAsientos extends JDialog {
         lblPantalla.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         add(lblPantalla, BorderLayout.NORTH);
 
-        // Dinámica de filas según capacidad (calculamos 10 sillas por fila)
         int columnas = 10;
         int filasTotales = (int) Math.ceil((double) capacidadSala / columnas);
         String[] letrasFilas = {"A", "B", "C", "D", "E", "F", "G", "H", "I", "J"};
@@ -44,13 +42,13 @@ public class DialogoAsientos extends JDialog {
                 btn.setFont(new Font("Arial", Font.BOLD, 11));
                 btn.setCursor(new Cursor(Cursor.HAND_CURSOR));
 
-                // Si está ocupado en la BD
-                if (ocupados.contains(nombreAsiento)) {
-                    btn.setBackground(new Color(220, 53, 69)); // Rojo
+                // Pinta de ROJO si el asiento ya está en el array de ocupados de la BD
+                if (ocupados != null && ocupados.contains(nombreAsiento)) {
+                    btn.setBackground(new Color(220, 53, 69)); // Rojo Ocupado
                     btn.setForeground(Color.WHITE);
                     btn.setEnabled(false);
                 } else {
-                    btn.setBackground(new Color(40, 167, 69)); // Verde
+                    btn.setBackground(new Color(40, 167, 69)); // Verde Libre
                     btn.setForeground(Color.WHITE);
                     
                     btn.addActionListener(new ActionListener() {
@@ -72,7 +70,6 @@ public class DialogoAsientos extends JDialog {
             }
         }
         
-        // Usamos Scroll por si la sala es muy grande
         add(new JScrollPane(panelSillas), BorderLayout.CENTER);
 
         JButton btnConfirmar = new JButton("Confirmar Selección");

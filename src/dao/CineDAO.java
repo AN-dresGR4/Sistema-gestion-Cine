@@ -1,6 +1,7 @@
 package dao;
 import modelo.Conexion;
 import modelo.Pelicula;
+import modelo.Reserva;
 import modelo.Sala;
 import java.sql.*;
 import java.util.ArrayList;
@@ -10,7 +11,7 @@ import javax.swing.table.DefaultTableModel;
 public class CineDAO {
     private Conexion conexion = new Conexion();
 
-    // -- 1. PELÍCULAS (CRUD COMPLETO) --
+    // -- 1. PELÍCULAS --
     public boolean registrarPelicula(Pelicula p) {
         String sql = "INSERT INTO peliculas (titulo, genero, duracion, clasificacion) VALUES (?, ?, ?, ?)";
         try (Connection con = conexion.getConexion(); PreparedStatement ps = con.prepareStatement(sql)) {
@@ -19,17 +20,14 @@ public class CineDAO {
             ps.execute(); return true;
         } catch (SQLException e) { return false; }
     }
-
     public boolean actualizarPelicula(Pelicula p) {
         String sql = "UPDATE peliculas SET titulo = ?, genero = ?, duracion = ?, clasificacion = ? WHERE id = ?";
         try (Connection con = conexion.getConexion(); PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setString(1, p.getTitulo()); ps.setString(2, p.getGenero());
-            ps.setInt(3, p.getDuracion()); ps.setString(4, p.getClasificacion());
-            ps.setInt(5, p.getId());
+            ps.setInt(3, p.getDuracion()); ps.setString(4, p.getClasificacion()); ps.setInt(5, p.getId());
             ps.execute(); return true;
         } catch (SQLException e) { return false; }
     }
-
     public List<Pelicula> listarPeliculas() {
         List<Pelicula> lista = new ArrayList<>();
         String sql = "SELECT * FROM peliculas";
@@ -37,7 +35,6 @@ public class CineDAO {
             while (rs.next()) lista.add(new Pelicula(rs.getInt("id"), rs.getString("titulo"), rs.getString("genero"), rs.getInt("duracion"), rs.getString("clasificacion")));
         } catch (SQLException e) { } return lista;
     }
-    
     public boolean eliminarPelicula(int id) {
         String sql = "DELETE FROM peliculas WHERE id = ?";
         try (Connection con = conexion.getConexion(); PreparedStatement ps = con.prepareStatement(sql)) {
@@ -78,9 +75,21 @@ public class CineDAO {
     public boolean registrarFuncion(int idPelicula, int idSala, String fechaHora, double precio) {
         String sql = "INSERT INTO funciones (id_pelicula, id_sala, fecha_hora, precio) VALUES (?, ?, ?, ?)";
         try (Connection con = conexion.getConexion(); PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setInt(1, idPelicula); ps.setInt(2, idSala);
-            ps.setString(3, fechaHora); ps.setDouble(4, precio);
+            ps.setInt(1, idPelicula); ps.setInt(2, idSala); ps.setString(3, fechaHora); ps.setDouble(4, precio);
             ps.execute(); return true;
+        } catch (SQLException e) { return false; }
+    }
+    public boolean actualizarFuncion(int idFuncion, int idPelicula, int idSala, String fechaHora, double precio) {
+        String sql = "UPDATE funciones SET id_pelicula = ?, id_sala = ?, fecha_hora = ?, precio = ? WHERE id = ?";
+        try (Connection con = conexion.getConexion(); PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, idPelicula); ps.setInt(2, idSala); ps.setString(3, fechaHora); ps.setDouble(4, precio); ps.setInt(5, idFuncion);
+            ps.execute(); return true;
+        } catch (SQLException e) { return false; }
+    }
+    public boolean eliminarFuncion(int idFuncion) {
+        String sql = "DELETE FROM funciones WHERE id = ?";
+        try (Connection con = conexion.getConexion(); PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, idFuncion); ps.execute(); return true;
         } catch (SQLException e) { return false; }
     }
     public DefaultTableModel obtenerCartelera() {
@@ -103,24 +112,21 @@ public class CineDAO {
         String sql = "SELECT s.capacidad FROM funciones f JOIN salas s ON f.id_sala = s.id WHERE f.id = ?";
         try (Connection con = conexion.getConexion(); PreparedStatement ps = con.prepareStatement(sql)) {
             ps.setInt(1, idFuncion);
-            try (ResultSet rs = ps.executeQuery()) {
-                if (rs.next()) return rs.getInt("capacidad");
-            }
+            try (ResultSet rs = ps.executeQuery()) { if (rs.next()) return rs.getInt("capacidad"); }
         } catch (SQLException e) {}
         return 30; 
     }
 
-    // -- 4. RESERVAS Y CLIENTES --
-    public List<String> obtenerAsientosOcupados(int idFuncion) {
-        List<String> ocupados = new ArrayList<>();
-        String sql = "SELECT asiento FROM reservas WHERE id_funcion = ?";
+    // -- 4. CLIENTES Y BÚSQUEDA AUTOMÁTICA --
+    public String[] obtenerDatosCliente(String documento) {
+        String sql = "SELECT nombre, correo FROM clientes WHERE documento = ?";
         try (Connection con = conexion.getConexion(); PreparedStatement ps = con.prepareStatement(sql)) {
-            ps.setInt(1, idFuncion);
+            ps.setString(1, documento);
             try (ResultSet rs = ps.executeQuery()) {
-                while (rs.next()) ocupados.add(rs.getString("asiento"));
+                if (rs.next()) return new String[]{rs.getString("nombre"), rs.getString("correo")};
             }
         } catch (SQLException e) {}
-        return ocupados;
+        return null;
     }
     public int registrarCliente(String doc, String nom, String cor) {
         String sqlBusqueda = "SELECT id FROM clientes WHERE documento = ?";
@@ -135,10 +141,54 @@ public class CineDAO {
             }
         } catch (SQLException e) { } return -1;
     }
+
+    // -- 5. RESERVAS (ARRAY Y MAPA) --
+    public List<String> obtenerAsientosOcupados(int idFuncion) {
+        List<String> ocupados = new ArrayList<>();
+        String sql = "SELECT asiento FROM reservas WHERE id_funcion = ?";
+        try (Connection con = conexion.getConexion(); PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, idFuncion);
+            try (ResultSet rs = ps.executeQuery()) {
+                while (rs.next()) ocupados.add(rs.getString("asiento"));
+            }
+        } catch (SQLException e) {}
+        return ocupados;
+    }
+
+    public List<Reserva> listarTodasLasReservas() {
+        List<Reserva> lista = new ArrayList<>();
+        String sql = "SELECT r.id, r.id_funcion, p.titulo, c.documento, c.nombre, r.asiento " +
+                     "FROM reservas r " +
+                     "JOIN funciones f ON r.id_funcion = f.id " +
+                     "JOIN peliculas p ON f.id_pelicula = p.id " +
+                     "JOIN clientes c ON r.id_cliente = c.id";
+        try (Connection con = conexion.getConexion(); PreparedStatement ps = con.prepareStatement(sql); ResultSet rs = ps.executeQuery()) {
+            while (rs.next()) {
+                lista.add(new Reserva(rs.getInt("id"), rs.getInt("id_funcion"), rs.getString("titulo"), rs.getString("documento"), rs.getString("nombre"), rs.getString("asiento")));
+            }
+        } catch (SQLException e) {}
+        return lista;
+    }
+
+    public boolean actualizarAsientoReserva(int idReserva, String nuevoAsiento) {
+        String sql = "UPDATE reservas SET asiento = ? WHERE id = ?";
+        try (Connection con = conexion.getConexion(); PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setString(1, nuevoAsiento); ps.setInt(2, idReserva);
+            ps.execute(); return true;
+        } catch (SQLException e) { return false; }
+    }
+
+    public boolean eliminarReserva(int idReserva) {
+        String sql = "DELETE FROM reservas WHERE id = ?";
+        try (Connection con = conexion.getConexion(); PreparedStatement ps = con.prepareStatement(sql)) {
+            ps.setInt(1, idReserva); ps.execute(); return true;
+        } catch (SQLException e) { return false; }
+    }
+
     public boolean registrarReservaMultiple(int func, int cli, List<String> asientos) {
         String sql = "INSERT INTO reservas (id_funcion, id_cliente, asiento) VALUES (?, ?, ?)";
         try (Connection con = conexion.getConexion()) {
-            con.setAutoCommit(false);
+            con.setAutoCommit(false); // Transacción segura
             try (PreparedStatement ps = con.prepareStatement(sql)) {
                 for (String as : asientos) {
                     ps.setInt(1, func); ps.setInt(2, cli); ps.setString(3, as);
