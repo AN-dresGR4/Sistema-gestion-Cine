@@ -5,68 +5,93 @@ import java.awt.*;
 public class VentanaPrincipal extends JFrame {
     public JTabbedPane pestanas;
     public JTable tablaCartelera, tablaPeliculas;
-    public JButton btnActualizarCartelera, btnGuardarPelicula, btnEliminarPelicula, btnReservar;
-    public JTextField txtTitulo, txtGenero, txtDuracion, txtClasificacion;
-    public JTextField txtDocCliente, txtNomCliente, txtCorreoCliente, txtAsiento, txtIdFuncionReserva;
+    
+    // Botones
+    public JButton btnAct, btnGuardar, btnEliminar, btnReservar, btnGuardarFuncion;
+    
+    // Campos Película
+    public JTextField txtTit, txtGen, txtDur, txtClas;
+    
+    // Campos Función (AQUÍ CAMBIAMOS EL TXT POR EL COMBOBOX)
+    public JComboBox<String> cbPeliculas; 
+    public JTextField txtIdSala, txtFecha, txtPrecio;
+    
+    // Campos Reserva
+    public JComboBox<String> cbFunciones; 
+    public JTextField txtAsi, txtDoc, txtNom, txtCor;
 
     public VentanaPrincipal() {
-        setTitle("Sistema de Gestión de Cine - CineCampus");
-        setSize(800, 600);
+        setTitle("Sistema de Gestión de Cine");
+        setSize(900, 650);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
         
         pestanas = new JTabbedPane();
         
-        // Pestaña 1
-        JPanel panelCartelera = new JPanel(new BorderLayout());
+        // --- PESTAÑA 1: Cartelera ---
+        JPanel p1 = new JPanel(new BorderLayout());
         tablaCartelera = new JTable();
-        btnActualizarCartelera = new JButton("Actualizar Cartelera");
-        panelCartelera.add(new JScrollPane(tablaCartelera), BorderLayout.CENTER);
-        panelCartelera.add(btnActualizarCartelera, BorderLayout.SOUTH);
-        pestanas.addTab("Inicio / Cartelera", panelCartelera);
+        btnAct = new JButton("Actualizar Cartelera");
+        p1.add(new JScrollPane(tablaCartelera), BorderLayout.CENTER);
+        p1.add(btnAct, BorderLayout.SOUTH);
         
-        // Pestaña 2
-        JPanel panelGestion = new JPanel(new BorderLayout());
-        JPanel panelFormularioPelicula = new JPanel(new GridLayout(5, 2, 10, 10));
-        panelFormularioPelicula.setBorder(BorderFactory.createTitledBorder("Gestión de Películas"));
+        // --- PESTAÑA 2: Gestión (Películas y Funciones) ---
+        JPanel p2 = new JPanel(new BorderLayout());
+        JPanel panelFormularios = new JPanel(new GridLayout(1, 2, 10, 0));
         
-        panelFormularioPelicula.add(new JLabel("Título:")); txtTitulo = new JTextField(); panelFormularioPelicula.add(txtTitulo);
-        panelFormularioPelicula.add(new JLabel("Género:")); txtGenero = new JTextField(); panelFormularioPelicula.add(txtGenero);
-        panelFormularioPelicula.add(new JLabel("Duración (min):")); txtDuracion = new JTextField(); panelFormularioPelicula.add(txtDuracion);
-        panelFormularioPelicula.add(new JLabel("Clasificación:")); txtClasificacion = new JTextField(); panelFormularioPelicula.add(txtClasificacion);
+        JPanel fPeli = new JPanel(new GridLayout(6, 2, 5, 5));
+        fPeli.setBorder(BorderFactory.createTitledBorder("1. Nueva Película"));
+        txtTit = new JTextField(); txtGen = new JTextField(); 
+        txtDur = new JTextField(); txtClas = new JTextField();
+        btnGuardar = new JButton("Guardar Película"); 
+        btnEliminar = new JButton("Eliminar Película");
+        fPeli.add(new JLabel("Título:")); fPeli.add(txtTit);
+        fPeli.add(new JLabel("Género:")); fPeli.add(txtGen);
+        fPeli.add(new JLabel("Duración (min):")); fPeli.add(txtDur);
+        fPeli.add(new JLabel("Clasificación:")); fPeli.add(txtClas);
+        fPeli.add(btnGuardar); fPeli.add(btnEliminar);
         
-        btnGuardarPelicula = new JButton("Guardar Película");
-        btnEliminarPelicula = new JButton("Eliminar Seleccionada");
-        JPanel panelBotonesGestion = new JPanel();
-        panelBotonesGestion.add(btnGuardarPelicula);
-        panelBotonesGestion.add(btnEliminarPelicula);
+        JPanel fFunc = new JPanel(new GridLayout(6, 2, 5, 5));
+        fFunc.setBorder(BorderFactory.createTitledBorder("2. Programar Función (Cartelera)"));
         
-        JPanel panelSupGestion = new JPanel(new BorderLayout());
-        panelSupGestion.add(panelFormularioPelicula, BorderLayout.CENTER);
-        panelSupGestion.add(panelBotonesGestion, BorderLayout.SOUTH);
+        cbPeliculas = new JComboBox<>(); // Inicializamos el select de películas
+        txtIdSala = new JTextField(); 
+        txtFecha = new JTextField("2026-11-10 15:00:00"); txtPrecio = new JTextField("10000");
+        btnGuardarFuncion = new JButton("Agregar a Cartelera");
+        
+        fFunc.add(new JLabel("Seleccionar Película:")); fFunc.add(cbPeliculas);
+        fFunc.add(new JLabel("ID Sala (1 o 2):")); fFunc.add(txtIdSala);
+        fFunc.add(new JLabel("Fecha/Hora:")); fFunc.add(txtFecha);
+        fFunc.add(new JLabel("Precio entrada:")); fFunc.add(txtPrecio);
+        fFunc.add(new JLabel("")); fFunc.add(btnGuardarFuncion);
+        
+        panelFormularios.add(fPeli); panelFormularios.add(fFunc);
         
         tablaPeliculas = new JTable();
-        panelGestion.add(panelSupGestion, BorderLayout.NORTH);
-        panelGestion.add(new JScrollPane(tablaPeliculas), BorderLayout.CENTER);
-        pestanas.addTab("Gestión", panelGestion);
+        p2.add(panelFormularios, BorderLayout.NORTH);
+        p2.add(new JScrollPane(tablaPeliculas), BorderLayout.CENTER);
         
-        // Pestaña 3
-        JPanel panelReservas = new JPanel(new GridLayout(6, 2, 10, 10));
-        panelReservas.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+        // --- PESTAÑA 3: Reservas ---
+        JPanel p3 = new JPanel(new GridLayout(7, 2, 10, 10));
+        p3.setBorder(BorderFactory.createEmptyBorder(20, 50, 20, 50));
         
-        panelReservas.add(new JLabel("ID Función (Ver en Cartelera):")); txtIdFuncionReserva = new JTextField(); panelReservas.add(txtIdFuncionReserva);
-        panelReservas.add(new JLabel("Asiento (Ej: A1, B4):")); txtAsiento = new JTextField(); panelReservas.add(txtAsiento);
-        panelReservas.add(new JLabel("Documento Cliente:")); txtDocCliente = new JTextField(); panelReservas.add(txtDocCliente);
-        panelReservas.add(new JLabel("Nombre Cliente:")); txtNomCliente = new JTextField(); panelReservas.add(txtNomCliente);
-        panelReservas.add(new JLabel("Correo Cliente:")); txtCorreoCliente = new JTextField(); panelReservas.add(txtCorreoCliente);
-        
+        cbFunciones = new JComboBox<>(); 
+        txtAsi = new JTextField(); txtDoc = new JTextField(); 
+        txtNom = new JTextField(); txtCor = new JTextField(); 
         btnReservar = new JButton("Confirmar Reserva / Generar Entrada");
         btnReservar.setBackground(new Color(34, 139, 34));
         btnReservar.setForeground(Color.WHITE);
-        panelReservas.add(new JLabel("")); 
-        panelReservas.add(btnReservar);
         
-        pestanas.addTab("Reservas / Entradas", panelReservas);
+        p3.add(new JLabel("Seleccionar Función:")); p3.add(cbFunciones);
+        p3.add(new JLabel("Asiento (Ej: A1, B4):")); p3.add(txtAsi);
+        p3.add(new JLabel("Documento Cliente:")); p3.add(txtDoc);
+        p3.add(new JLabel("Nombre Cliente:")); p3.add(txtNom);
+        p3.add(new JLabel("Correo Cliente:")); p3.add(txtCor);
+        p3.add(new JLabel("")); p3.add(btnReservar);
+        
+        pestanas.addTab("Inicio / Cartelera", p1);
+        pestanas.addTab("Gestión de Catálogo", p2);
+        pestanas.addTab("Reservas / Entradas", p3);
         add(pestanas);
     }
 }
